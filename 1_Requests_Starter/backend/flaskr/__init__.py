@@ -46,13 +46,15 @@ def create_app(test_config=None):
         start = (page - 1) * BOOKS_PER_SHELF
         end = start + BOOKS_PER_SHELF
         
-        books = Book.query.all()[start:end]
+        books = Book.query.all()
+        total_books = len(books)
+        books = books[start:end]
         books = [book.format() for book in books]
 
         return jsonify({
             "success": True,
             "books": books,
-            "total_books": len(books)
+            "total_books": total_books
         })
 
     # @TODO: Write a route that will update a single book's rating.
@@ -89,5 +91,13 @@ def create_app(test_config=None):
     #        Response body keys: 'success', 'created'(id of created book), 'books' and 'total_books'
     # TEST: When completed, you will be able to a new book using the form. Try doing so from the last page of books.
     #       Your new book should show up immediately after you submit it at the end of the page.
+    @app.route('/books', methods=['POST'])
+    def createBook():
+        book = Book(request.json['title'], request.json['author'], request.json['rating'])
+        db.session.add(book)
+        db.session.commit()
+        return jsonify({
+            "success": True
+        })
 
     return app
