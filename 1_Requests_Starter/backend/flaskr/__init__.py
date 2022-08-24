@@ -1,10 +1,11 @@
+import json
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy  # , or_
 from flask_cors import CORS
 import random
 
-from models import setup_db, Book
+from models import setup_db, Book, db
 
 BOOKS_PER_SHELF = 8
 
@@ -38,13 +39,20 @@ def create_app(test_config=None):
     #         update the frontend to handle additional books in the styling and pagination
     #         Response body keys: 'success', 'books' and 'total_books'
     # TEST: When completed, the webpage will display books including title, author, and rating shown as stars
-    @app.route('/books')
+    @app.route('/books', methods=['GET'])
     def getBooks():
-        books = Book.query.all()
+        
+        page = request.args.get('page', 1, type=int)
+        start = (page - 1) * BOOKS_PER_SHELF
+        end = start + BOOKS_PER_SHELF
+        
+        books = Book.query.all()[start:end]
         books = [book.format() for book in books]
+
         return jsonify({
             "success": True,
-            "books": books
+            "books": books,
+            "total_books": len(books)
         })
 
     # @TODO: Write a route that will update a single book's rating.
@@ -52,12 +60,30 @@ def create_app(test_config=None):
     #         and should follow API design principles regarding method and route.
     #         Response body keys: 'success'
     # TEST: When completed, you will be able to click on stars to update a book's rating and it will persist after refresh
+    @app.route('/books/<int:book_id>', methods=['PATCH'])
+    def changeBookRating(book_id):
+        new_rating = request.json['rating']
+        book = Book.query.filter(Book.id == book_id).first()
+        book.rating = new_rating
+        db.session.commit()
+        return jsonify({
+            'success': True
+        })
 
     # @TODO: Write a route that will delete a single book.
     #        Response body keys: 'success', 'deleted'(id of deleted book), 'books' and 'total_books'
     #        Response body keys: 'success', 'books' and 'total_books'
 
     # TEST: When completed, you will be able to delete a single book by clicking on the trashcan.
+    @app.route('/books/<int:book_id>', methods=['DELETE'])
+    def deleteBook(book_id):
+        book = Book.query.filter(Book.id == book_id).first()
+        db.session.delete(book)
+        db.session.commit()
+        return jsonify({
+            "success": True
+        })
+
 
     # @TODO: Write a route that create a new book.
     #        Response body keys: 'success', 'created'(id of created book), 'books' and 'total_books'

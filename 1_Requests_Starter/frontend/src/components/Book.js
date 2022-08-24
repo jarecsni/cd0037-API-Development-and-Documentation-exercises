@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import '../stylesheets/Book.css';
 
-const starArray = [5,4,3,2,1]
+const starArray = [1,2,3,4,5]
 
 class Book extends Component {
   createStars(){
