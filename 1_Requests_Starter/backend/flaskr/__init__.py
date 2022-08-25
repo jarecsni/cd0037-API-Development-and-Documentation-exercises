@@ -46,9 +46,11 @@ def create_app(test_config=None):
         start = (page - 1) * BOOKS_PER_SHELF
         end = start + BOOKS_PER_SHELF
         
-        books = Book.query.all()
+        books = Book.query.order_by(Book.id).all()
         total_books = len(books)
         books = books[start:end]
+        if len(books) == 0:
+            abort(404)
         books = [book.format() for book in books]
 
         return jsonify({
@@ -64,13 +66,19 @@ def create_app(test_config=None):
     # TEST: When completed, you will be able to click on stars to update a book's rating and it will persist after refresh
     @app.route('/books/<int:book_id>', methods=['PATCH'])
     def changeBookRating(book_id):
-        new_rating = request.json['rating']
-        book = Book.query.filter(Book.id == book_id).first()
-        book.rating = new_rating
-        db.session.commit()
-        return jsonify({
-            'success': True
-        })
+        try:
+            book = Book.query.filter(Book.id == book_id).first()
+            if book == None:
+                abort(404)
+            body = request.get_json()
+            if 'rating' in body:
+                book.rating = int(body.get('rating'))
+                book.update()
+            return jsonify({
+                'success': True
+            })
+        except Exception as e:
+            abort(500, e)
 
     # @TODO: Write a route that will delete a single book.
     #        Response body keys: 'success', 'deleted'(id of deleted book), 'books' and 'total_books'
