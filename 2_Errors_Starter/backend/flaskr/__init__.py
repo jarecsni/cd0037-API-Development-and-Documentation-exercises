@@ -97,7 +97,8 @@ def create_app(test_config=None):
                 }
             )
 
-        except:
+        except Exception as e:
+            print('**** Hello', e)
             abort(422)
 
     @app.route("/books", methods=["POST"])
@@ -129,6 +130,16 @@ def create_app(test_config=None):
 
     # @TODO: Review the above code for route handlers.
     #        Pay special attention to the status codes used in the aborts since those are relevant for this task!
+    @app.errorhandler(400)
+    @app.errorhandler(404)
+    @app.errorhandler(422)
+    def handle_404_error(error):
+        return jsonify({
+            "success": False,
+            "error": error.code,
+            "message": error.description
+        })
+
 
     # @TODO: Write error handler decorators to handle AT LEAST status codes 400, 404, and 422.
 
